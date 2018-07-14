@@ -1,0 +1,22 @@
+{
+  "name": "wxprogram",
+  "version": "1.0.0",
+  "description": "校园活动广场微信小程序",
+  "main": "/",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhijs/wxProgram.git"
+  },
+  "keywords": [
+    "微信小程序"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zhijs/wxProgram/issues"
+  },
+  "homepage": "https://github.com/zhijs/wxProgram#readme"
+}
