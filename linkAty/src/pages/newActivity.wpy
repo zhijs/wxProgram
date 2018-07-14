@@ -1,0 +1,508 @@
+<template>
+  <view class="newactivity-contain">
+    <view class="{{dateObj.flag ? 'mask' : ''}}">
+      <view class="poster-content" wx:if="{{poster !== ''}}">
+        <image class="poster" src="{{poster}}"></image>
+      </view>
+      <view class='title-content select-item'>
+        <input class="title" type='text' placeholder="活动名称(17字以内)" maxlength="17" bindinput="editTitle"/>
+        <view class="img-content" @tap="upLoadPoster">
+          <image src="../assets/svgs/img.svg"></image>
+        </view>
+      </view>
+      <view class="select select-item" @tap="openTimeSelect('start')" >
+           <view>开始时间</view>
+	         <view class="picker">
+	              <text class="{{startSelected}}">{{startDateTime}}</text>
+                <view class="picker-img-content">
+	                 <image src="../assets/svgs/arrow-right.svg"></image>
+                </view>             
+	         </view>
+      </view>
+      <view class="select select-item" @tap="openTimeSelect('end')">
+           <view>结束时间</view>
+           <view class="picker">
+                <text class="{{endSelected}}">{{endDateTime}}</text>
+                <view class="picker-img-content">
+                 <image src="../assets/svgs/arrow-right.svg"></image>
+                </view>             
+           </view>
+      </view>
+      <view class="select select_location select-item" >
+           <view>活动地点</view>
+           <view class="picker location-picker" @tap = "chooseLocation()">
+                <text class="{{localSelected ? 'selected' : ''}} text-location">{{location.name}}</text>
+                <view class="picker-img-content">
+                   <image src="../assets/svgs/arrow-right.svg"></image>
+                </view>            
+           </view>
+      </view>
+       <view class="type-introduce-content select-item">
+         <view class="select type-select" >
+             <view>活动类别</view>
+             <view class="picker type-picker" @tap = "openType()">
+                  <text class="{{activityObj.selectedState ? 'type-selected-text' : ''}} text-type">{{activityObj.typeSelected}}</text>
+                  <view class="picker-img-content">
+                     <image src="../assets/svgs/arrow-right.svg"></image>
+                  </view>            
+             </view>
+        </view>
+         <view class="kinds-activities select-item" wx:if="{{activityObj.activityShow}}">
+              <repeat for="{{activityObj.activities}}" item="item" index="index">
+                 <text @tap="selectType('{{index}}')" class=" {{item.selected ? 'selectedType': ''}}">{{item.name}}</text>
+              </repeat>
+          </view>  
+      </view>
+      <view class="select select_introduce select-item" >
+           <view>活动介绍</view>
+           <view class="picker activity-content-picker" @tap ="editActivityContent()">
+                <text class=" {{contentEdited ? 'selected' : ''}} text-introduce">{{content.contentText}}</text>
+                <view class="picker-img-content">
+                   <image src="../assets/svgs/arrow-right.svg"  class="content-img"></image>
+                </view>            
+           </view>
+      </view>
+      <view class="publish-btn-content">
+         <button type="primary"  bindtap="publish">发布</button>
+      </view>   
+    </view> 
+    <view class="datetime-content" wx:if = "{{dateObj.flag}}">
+       <datetime :dateObj.sync="dateObj"></datetime>
+    </view> 
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import datetime from '../components/datetime'
+  import interfaces from '../interfaces/index'
+  import { api } from '../config'
+  export default class neweActivity extends wepy.page {
+    components = {
+      datetime: datetime
+    }
+    data = {
+      poster: '',
+      contentImgs: [],
+      posterPath: '',
+      title: '',
+      session: '',
+      isInitShow: true,
+      startDateTime: '请选择开始时间',
+      endSelected: '',
+      startSelected: '',
+      contentSelectd: '',
+      endDateTime: '请选择结束时间',
+      location: {
+        name: '地点选择',
+        latitude: '',
+        longitude: ''
+      },
+      localSelected: false,
+      contentEdited: false,
+      content: {
+        imagesPath: [],
+        contentText: '活动介绍'
+      },
+      activityObj: {
+        activityTypeIndex: null,
+        typeSelected: '',
+        selectedState: false,
+        activityShow: false,
+        activities: [
+          {name: '体育运动', selected: false},
+          {name: '讲座会议', selected: false},
+          {name: '户外活动', selected: false},
+          {name: '班级活动', selected: false},
+          {name: '社团活动', selected: false},
+          {name: '其他', selected: false}
+        ]
+      },
+      dateObj: {
+        type: null,
+        flag: false
+      }
+    }
+    config = {
+      navigationBarTitleText: '活动发布'
+    }
+    onShow() {
+      try {
+        let data = wepy.getStorageSync('_content')
+        if (data === '') {
+          this.content = {
+            imagesPath: [],
+            contentText: '活动介绍'
+          }
+          this.contentEdited = false
+        } else {
+          this.content = data
+          this.contentEdited = true
+        }
+        this.$apply()
+      } catch (e) {
+      }
+    }
+    /*
+    *图片上传
+    * path -- 图片路径数组
+    * type -- 1.poster   2.contentImgs
+    */
+    async upLoadImg(paths, type) {
+      let header = {}
+      header['Content-Type'] = 'multipart/form-data'
+      header['session'] = this.session
+      try {
+        const data = await wepy.uploadFile({
+          url: api.activity.upLoadImg.url,
+          filePath: paths,
+          name: 'image',
+          formData: {
+            type: type,
+            session: this.session
+          },
+          header: header
+        })
+        let body = JSON.parse(data.data)
+        if (body.code === 1 && type === 'poster') {
+          this.posterPath = body.data
+        } else if (body.code === 1 && type === 'content') {
+          this.contentImgs.push(body.data)
+        }
+        this.$apply()
+      } catch (e) {
+        wepy.showModal({
+          title: '提示',
+          content: '图片上传出错'
+        })
+      }
+    }
+    methods = {
+      /*
+      * 选择海报
+      *
+      */
+      async upLoadPoster() {
+        const {tempFilePaths} = await wepy.chooseImage({
+          count: 1,
+          sizeType: 'compressed'
+        })
+        this.poster = tempFilePaths[0]
+        this.$apply()
+      },
+      openTimeSelect(type) {
+        this.dateObj.flag = !this.dateObj.flag
+        if (!this.dateObj.flag) {
+          return
+        }
+        this.dateObj.type = type
+      },
+      async chooseLocation() {
+        try {
+          const {name, latitude, longitude} = await wepy.chooseLocation()
+          this.location.name = name
+          this.location.latitude = latitude
+          this.location.longitude = longitude
+          this.localSelected = true
+          this.$apply()
+        } catch (e) {
+          wepy.showModal({
+            title: '提示',
+            content: '位置获取出错'
+          })
+        }
+      },
+      openType(index) {
+        this.activityObj.activityShow = !this.activityObj.activityShow
+        if (!this.activityObj.activityShow && this.activityObj.activityTypeIndex !== null) {
+          this.activityObj.typeSelected = this.activityObj.activities[this.activityObj.activityTypeIndex].name
+          this.activityObj.selectedState = true
+        }
+      },
+      selectType(index) {
+        if (this.activityObj.activityTypeIndex === null) {
+          this.activityObj.activityTypeIndex = index
+        } else {
+          this.activityObj.activities[this.activityObj.activityTypeIndex].selected = false
+        }
+        this.activityObj.activityTypeIndex = index
+        this.activityObj.activities[index].selected = true
+      },
+      editActivityContent() {
+        this.$preload('content', this.content)
+        this.$navigate('activityContent')
+      },
+      editTitle(e) {
+        this.title = e.detail.value
+        this.$apply()
+      },
+      // 活动发布函数
+      async publish() {
+        if (new Date(this.endDateTime) - new Date(this.startDateTime) < 0) {
+          wepy.showModal({
+            title: '提示',
+            content: '开始时间不能大于结束时间'
+          })
+          return
+        }
+        let activityData = {}
+        this.session = this.$parent.globalData.openId
+        activityData.author = this.session
+        if (this.endDateTime === '请选择开始时间' || this.startDateTime === '请选择结束时间' || !this.contentEdited || !this.localSelected || !this.activityObj.selectedState || this.title === '') {
+          wepy.showModal({
+            title: '提示',
+            content: '请填写完整各项信息'
+          })
+          return
+        }
+        activityData.type = this.activityObj.typeSelected
+        activityData.date = {}
+        activityData.date.start = this.startDateTime
+        activityData.date.end = this.endDateTime
+        activityData.date.endTime = (new Date(this.endDateTime)).getTime()
+        activityData.location = this.location
+        activityData.likedUser = []
+        activityData.humanNum = 0
+        activityData.title = this.title
+        wepy.showLoading({
+          title: '正在发布, 请稍后',
+          mask: true
+        })
+        if (this.poster !== '') {
+          await this.upLoadImg(this.poster, 'poster')
+        }
+        if (this.content.imagesPath.length !== 0) {
+          for (let i = 0; i < this.content.imagesPath.length; i++) {
+            await this.upLoadImg(this.content.imagesPath[i], 'content')
+          }
+        }
+        activityData.content = {}
+        activityData.content.contentText = this.content.contentText
+        activityData.content.imagesPath = this.contentImgs
+        activityData.posterPath = this.posterPath
+        let header = {}
+        header['content-type'] = 'application/json'
+        header['session'] = this.session
+        const data = await wepy.request({
+          url: api.activity.publish.url,
+          method: api.activity.publish.method,
+          data: activityData,
+          header: header
+        })
+        if (data.data.code === 1) {
+          try {
+            wepy.setStorageSync('newitem', data.data.data)
+            wepy.navigateBack()
+          } catch (e) {
+          }
+          wepy.hideLoading()
+        } else {
+          wepy.hideLoading()
+          wepy.showModal({
+            title: '提示',
+            content: '发布失败'
+          })
+        }
+      }
+    }
+    async onLoad() {
+      let session = await wepy.checkSession()
+      try {
+        wepy.setStorageSync('_content', '')
+      } catch (e) {
+      }
+      if (session.errMsg !== 'checkSession:ok') {
+        await interfaces.login()
+      }
+    }
+    events = {
+      'selectedDate': (state, type, datetime, $event) => {
+        if (state === 'cancel') {
+          return
+        }
+        if (type === 'start') {
+          this.startDateTime = datetime
+          this.startSelected = 'selected'
+        } else {
+          this.endDateTime = datetime
+          this.endSelected = 'selected'
+        }
+      }
+    }
+  }
+</script>
+<style lang="less">
+  page{
+     background: #F8F8FF;
+  }
+  .select-item{
+    background: #FFFFFF;
+  }
+  .poster-content{
+    height: 150px;
+  }
+  .poster-content .poster{
+    height: 100%;
+    width: 100%;
+  }
+  .title-content{
+     height: 50px;
+     border: 1px solid #EBEBEB;
+     position: relative;
+     margin-bottom: 15px;
+  }
+  .title{
+     height: 100%;
+     line-height: 50px;
+     padding: 2px 2px 2px 5px;
+     display: inline-block;
+     font-size: 20px;
+  }
+  .img-content{
+    position: absolute;
+    display: inline-block;
+    width: 40px;
+    right: 10px;
+    height: 40px;
+    top: 5px;
+    border-radius: 50%;
+    background: #FAFAFA;
+  }
+  .img-content image{
+     width: 24px;
+     height: 24px;
+     margin: 8px;
+  }
+  .select{
+     border-top: 1px solid #EBEBEB;
+     height: 40px;
+     display: flex;
+     font-size: 16px;
+  }
+  .select_location,
+  .select_introduce,
+  .telephone-content
+  {
+    border-bottom: 1px solid #EBEBEB;
+  }
+  .text-introduce{
+    display: flex;
+    overflow: hidden;
+    text-overflow:ellipsis;
+  }
+  .select > view{
+     height: 100%;
+     display: inline-block;
+     line-height: 40px;
+  }
+  .select > view:nth-child(1){
+    width: 50%;
+    padding-left: 8px;
+  }
+  .select .activity-content-navigator{
+    width: 50%;
+  }
+  .activity-content-navigator .activity-content-picker{
+    width: 100%;
+  }
+  .picker{
+    height: 40px;
+    width: 50%;
+    text-align: right;
+  }
+  .select .location-picker, 
+  .select  .type-picker,
+  .select  .activity-content-picker
+  {
+    display: flex;
+    justify-content:flex-end;
+
+  }
+  .picker > text{
+    display: inline-block;
+    height: 100%;
+    line-height: 40px;
+    font-size: 12px;
+    color: #EEEEE0;
+    white-space: nowrap;
+    text-align: right;
+
+  }
+  .picker .text-location,
+  .picker .text-type
+  {
+    display: flex;
+    overflow:hidden; 
+    text-overflow:ellipsis;
+    just-content: flex-end;
+
+  }
+  .location-picker > image{
+     margin: 12px 0;
+  }
+  .picker .selected,
+  .type-picker .type-selected-text
+  {
+    color: #212121;
+  }
+  .picker .picker-img-content{
+    display: inline-block;
+  }
+  .picker .picker-img-content > image{
+    line-height: 40px;
+    height: 16px;
+    width: 16px;
+    padding: 0 14px;
+  }
+  .content-img{
+    margin: 12px 0;
+  }
+  .type-introduce-content {
+    margin-top: 15px;
+  }
+  .type-introduce-content .kinds-activities{
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 5px;
+  }
+  .kinds-activities > text{
+    padding: 4px;
+    background: #F2F2F2;
+    margin: 3px;
+
+  }
+  .kinds-activities .selectedType{
+    background: #00B2EE;
+  }
+  .newactivity-contain .mask{
+    opacity: 0.1;
+  }
+  .telephone-content{
+    margin-top: 15px;
+    display: flex;
+  }
+  .contain .telephone-content > view{
+    width: auto;
+    display: flex;
+    flex-grow: 1;
+  }
+  .switch-content{
+    justify-content: center;
+  }
+  .publish-btn-content{
+    margin-top: 20px;
+  }
+  .datetime-content{
+    height: 320px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+  }
+  .publish-btn-content > button{
+    background-color: #7AC5CD;
+  }
+  .publish-btn-content > .button-hover[type="primary"]{
+    background-color: #00B2EE;
+  }
+
+</style>

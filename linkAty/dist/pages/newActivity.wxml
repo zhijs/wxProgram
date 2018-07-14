@@ -1,0 +1,106 @@
+
+  <view class="newactivity-contain">
+    <view class="{{dateObj.flag ? 'mask' : ''}}">
+      <view class="poster-content"  wx:if="{{poster !== ''}}">
+        <image class="poster" src="{{poster}}"/>
+      </view>
+      <view class="title-content select-item">
+        <input class="title" type="text" placeholder="活动名称(17字以内)" maxlength="17" bindinput="editTitle"/>
+        <view class="img-content" bindtap="upLoadPoster">
+          <image src="../assets/svgs/img.svg"/>
+        </view>
+      </view>
+      <view class="select select-item" bindtap="openTimeSelect" data-wpyopentimeselect-a="start">
+           <view>开始时间</view>
+	         <view class="picker">
+	              <text class="{{startSelected}}">{{startDateTime}}</text>
+                <view class="picker-img-content">
+	                 <image src="../assets/svgs/arrow-right.svg"/>
+                </view>             
+	         </view>
+      </view>
+      <view class="select select-item" bindtap="openTimeSelect" data-wpyopentimeselect-a="end">
+           <view>结束时间</view>
+           <view class="picker">
+                <text class="{{endSelected}}">{{endDateTime}}</text>
+                <view class="picker-img-content">
+                 <image src="../assets/svgs/arrow-right.svg"/>
+                </view>             
+           </view>
+      </view>
+      <view class="select select_location select-item">
+           <view>活动地点</view>
+           <view class="picker location-picker" bindtap="chooseLocation" data-wpychooselocation-a="">
+                <text class="{{localSelected ? 'selected' : ''}} text-location">{{location.name}}</text>
+                <view class="picker-img-content">
+                   <image src="../assets/svgs/arrow-right.svg"/>
+                </view>            
+           </view>
+      </view>
+       <view class="type-introduce-content select-item">
+         <view class="select type-select">
+             <view>活动类别</view>
+             <view class="picker type-picker" bindtap="openType" data-wpyopentype-a="">
+                  <text class="{{activityObj.selectedState ? 'type-selected-text' : ''}} text-type">{{activityObj.typeSelected}}</text>
+                  <view class="picker-img-content">
+                     <image src="../assets/svgs/arrow-right.svg"/>
+                  </view>            
+             </view>
+        </view>
+         <view class="kinds-activities select-item"  wx:if="{{activityObj.activityShow}}">
+              <block wx:for="{{activityObj.activities}}" wx:for-index="index" wx:for-item="item" wx:key="key">
+                 <text bindtap="selectType" class=" {{item.selected ? 'selectedType': ''}}" data-wpyselecttype-a="{{index}}">{{item.name}}</text>
+              </block>
+          </view>  
+      </view>
+      <view class="select select_introduce select-item">
+           <view>活动介绍</view>
+           <view class="picker activity-content-picker" bindtap="editActivityContent" data-wpyeditactivitycontent-a="">
+                <text class=" {{contentEdited ? 'selected' : ''}} text-introduce">{{content.contentText}}</text>
+                <view class="picker-img-content">
+                   <image src="../assets/svgs/arrow-right.svg" class="content-img"/>
+                </view>            
+           </view>
+      </view>
+      <view class="publish-btn-content">
+         <button type="primary" bindtap="publish">发布</button>
+      </view>   
+    </view> 
+    <view class="datetime-content" wx:if="{{dateObj.flag}}">
+       
+   <view class="datetime-contain"  wx:if="{{$datetime$dateObj.flag}}" animation="{animationData}">
+     <view class="btn-contain">
+        <text bindtap="$datetime$selectPicker" data-wpyselectpicker-a="cancel">取消</text>
+        <text bindtap="$datetime$selectPicker" data-wpyselectpicker-a="selected" data-wpyselectpicker-b="{{$datetime$dateObj.type}}">确定</text>
+     </view>
+     <picker-view indicator-style="height: 50px;" value="{{$datetime$value}}" bindchange="$datetime$bindChange" class="mypicker">
+         <picker-view-column>
+            <block wx:for="{{$datetime$years}}" wx:for-index="$datetime$index" wx:for-item="$datetime$item" wx:key="$datetime$index">
+              <view class="item">{{$datetime$item}}年</view>
+            </block>
+         </picker-view-column>
+          <picker-view-column>
+            <block wx:for="{{$datetime$month}}" wx:for-index="$datetime$index" wx:for-item="$datetime$item" wx:key="$datetime$index">
+              <view class="item">{{$datetime$item}}月</view>
+            </block>
+        </picker-view-column>
+        <picker-view-column>
+          <block wx:for="{{$datetime$day}}" wx:for-index="$datetime$index" wx:for-item="$datetime$item" wx:key="$datetime$index">
+            <view class="item">{{$datetime$item}}日</view>
+          </block>
+        </picker-view-column>
+        <picker-view-column>
+          <block wx:for="{{$datetime$hour}}" wx:for-index="$datetime$index" wx:for-item="$datetime$item" wx:key="$datetime$index">
+            <view class="item">{{$datetime$item}}时</view>
+          </block>
+        </picker-view-column>
+         <picker-view-column>
+          <block wx:for="{{$datetime$minute}}" wx:for-index="$datetime$index" wx:for-item="$datetime$item" wx:key="$datetime$index">
+            <view class="item">{{$datetime$item}}分</view>
+          </block>
+        </picker-view-column>
+  </picker-view>
+   </view>
+
+    </view> 
+  </view>

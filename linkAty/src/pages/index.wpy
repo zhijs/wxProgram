@@ -1,0 +1,381 @@
+<template>
+  <view>
+    <view class = "{{showIndex === 0 ? 'visible' : 'hidden'}} page">
+       <navigator url="newActivity">
+       <view class="write-content">
+          
+          <image src="../assets/svgs/write.svg"></image>
+       </view>
+       </navigator>
+       <repeat for="{{activityList}}" key="index" index="index" item="item">
+          <view @tap="openDetail({{index}})">
+            <activity :dataItem="item" ></activity>
+          </view>
+       </repeat>
+    </view>
+    <view class = "{{showIndex === 1 ? 'visible' : 'hidden'}} page">
+       <view wx:if="{{hasNews}}">暂无消息</view>
+       <repeat for="{{news}}" item="item" key="index">
+          <view wx:if="{{item.message.length > 0}}" @tap="openChat('{{index}}')">
+            <newitem :newItem.sync="item" :items.sync="news" :index="index"></newitem>
+          </view>
+       </repeat>
+    </view>
+    <view class = "{{showIndex === 2 ? 'visible' : 'hidden'}} page">
+      <view class="my-page-avatar-content">
+         <view class="avatar-content">
+            <image src="{{userInfo.avatar}}" class="my-avatar"></image>
+         </view>
+         <view class="username">
+            {{userInfo.name}}
+         </view>
+      </view>
+        <repeat for="{{myactivitys}}" item="item" index="index">
+           <view  @tap="openDetail('{{index}}')">
+              <myactivity :item.sync="item" :activitys.sync="myactivitys" :index="index"></myactivity>
+           </view>
+        </repeat>
+        
+    </view>
+    <view class="tab">
+          <view @tap = "changeTab(0)">
+                <image src="../assets/svgs/home-fill.svg" wx:if="{{ showIndex === 0 }}"></image>
+               <image src="../assets/svgs/home.svg" wx:else/>
+          </view>
+
+          <view @tap = "changeTab(1)">
+            <image src="../assets/svgs/message-fill.svg" wx:if="{{ showIndex === 1 }}"></image>
+            <image src="../assets/svgs/message.svg" wx:else/>
+            <view class="messgae" wx:if="{{messageNum > 0}}">{{messageNum}}</view>
+          </view>
+
+          <view @tap = "changeTab(2)">
+              <image src="../assets/svgs/my-fill.svg" wx:if="{{ showIndex === 2 }}"></image>
+              <image src="../assets/svgs/my.svg" wx:else/>
+          </view>
+    </view>
+  </view>
+</template>
+
+<script>
+    import wepy from 'wepy'
+    import activity from '.././components/activity'
+    import newitem from '.././components/newItem'
+    import myactivity from '.././components/myactivity'
+    import interfaces from '../interfaces/index'
+    import { api } from '../config'
+    export default class index extends wepy.page {
+      config = {
+        navigationBarTitleText: '校园活动广场'
+      }
+      data = {
+        showIndex: 0,
+        userInfo: '',
+        session: '',
+        myactivitys: [],
+        activityList: [],
+        news: [],
+        activityPage: 1,
+        newPage: 1,
+        end: false,
+        loadMored: true,
+        loadMessgeTask: null
+      }
+      components = {
+        activity: activity,
+        newitem: newitem,
+        myactivity: myactivity
+      }
+
+      /*
+      *  数据请求
+      *  活动列表 消息数据
+      */
+      async loadActivityData() {
+        try {
+          let header = {}
+          header['session'] = this.session
+          if (this.end) {
+            return
+          }
+          const body = await wepy.request({
+            url: api.activity.list.url,
+            method: api.activity.list.method,
+            header: header,
+            data: {page: this.activityPage}
+          })
+          if (body.data.code === 1) {
+            this.activityList = body.data.data
+            this.end = body.data.end
+            this.activityPage ++
+            this.$apply()
+          } else {
+            wepy.showModal({
+              title: '提示',
+              content: '获取列表失败'
+            })
+          }
+        } catch (e) {
+        }
+        wepy.stopPullDownRefresh()
+      }
+      async loadmoreData() {
+        try {
+          let header = {}
+          header['session'] = this.session
+          if (this.end) {
+            return
+          }
+          const body = await wepy.request({
+            url: api.activity.list.url,
+            method: api.activity.list.method,
+            header: header,
+            data: {page: this.activityPage}
+          })
+          if (body.data.code === 1) {
+            this.activityList.push(...body.data.data)
+            this.end = body.data.end
+            this.loadMored = true
+            this.activityPage++
+            this.$apply()
+          }
+        } catch (e) {
+        }
+      }
+
+      /*
+      * 请求加载消息数据
+      *
+      */
+      async loadMessage() {
+        let header = {}
+        header['session'] = this.session
+        try {
+          const body = await wepy.request({
+            url: api.message.list.url,
+            method: api.message.list.method,
+            header: header
+          })
+          if (body.data.code === 1) {
+            this.news = body.data.data
+            this.$apply()
+          }
+        } catch (e) {
+        }
+      }
+      async onLoad(data) {
+        try {
+          let session = await wepy.checkSession()
+          if (session.errMsg !== 'checkSession:ok') {
+            await interfaces.login()
+          }
+        } catch (e) {
+          await interfaces.login()
+        }
+        try {
+          let userData = wepy.getStorageSync('_userinfo')
+          this.userInfo = userData
+          this.$parent.globalData.userInfo = this.userInfo
+          let _session = wepy.getStorageSync('_session')
+          this.session = _session.split('<<')[0]
+          this.$parent.globalData.openId = this.session
+          await this.loadActivityData()
+          await this.loadMessage()
+        } catch (e) {
+        }
+      }
+      async onShow() {
+        try {
+          let newitem = wepy.getStorageSync('newitem')
+          if (newitem !== '') {
+            this.activityList.unshift(newitem)
+            this.myactivitys.unshift({
+              oldIndex: 0,
+              value: newitem
+            })
+            wepy.removeStorageSync('newitem')
+          }
+        } catch (e) {
+        }
+        this.$apply()
+      }
+      methods = {
+        changeTab(index) {
+          this.showIndex = parseInt(index)
+          if (this.showIndex === 1) {
+            this.loadMessgeTask = setInterval(() => {
+              this.loadMessage()
+            }, 5000)
+          } else if (this.loadMessgeTask !== null) {
+            clearInterval(this.loadMessgeTask)
+          }
+          this.$apply()
+        },
+        openDetail(index, event) {
+          let data = {
+            item: this.activityList[index],
+            itemIndex: index
+          }
+          this.$preload('data', data)
+          this.$navigate('activityDetail')
+        },
+        async openChat(index) {
+          let header = {}
+          header['session'] = this.session
+          let data = {messageId: this.news[index]._id}
+          if (!this.news[index].hadRead) {
+            // 发起请求 标记该消息为已读
+            const body = await wepy.request({
+              url: api.message.read.url,
+              method: api.message.read.method,
+              header: header,
+              data: data
+            })
+            if (body.data.code === 1) {
+              this.news[index].hadRead = true
+            }
+          }
+          this.$preload('item', this.news[index])
+          this.$navigate('chatPage')
+        }
+      }
+      computed = {
+        messageNum() {
+          let num = 0
+          for (let i = 0; i < this.news.length; i++) {
+            if (!this.news[i].hadRead) {
+              num++
+            }
+          }
+          return num > 99 ? '99+' : num
+        },
+        myactivitys() {
+          let arr = []
+          this.activityList.forEach((value, index) => {
+            if (value.author === this.session) {
+              arr.push({
+                oldIndex: index,
+                value: value
+              })
+            }
+          })
+          return arr
+        },
+        hasNews() {
+          return this.news.length === 0
+        }
+      }
+
+      // 下拉刷新
+      async onPullDownRefresh() {
+        if (this.showIndex !== 0) {
+          wepy.stopPullDownRefresh()
+          return
+        }
+        this.activityPage = 1
+        this.end = false
+        await this.loadActivityData()
+      }
+
+      // 下拉至底部
+      async onReachBottom() {
+        if (this.showIndex !== 0 || !this.loadMored) {
+          return
+        }
+        this.loadMored = false
+        await this.loadmoreData()
+      }
+      events = {
+        deleteMyActivity: (index, event) => {
+          this.activityList.splice(parseInt(index), 1)
+          this.$apply()
+        }
+      }
+   }
+</script>
+<style lang='less'>
+   page{
+     background: #F8F8FF;
+   }
+   view {
+     font-family: Helvetica, 'Hiragino Sans GB', 'Microsoft Yahei', '微软雅黑', Arial, sans-serif;
+   }
+   .write-content{
+      position: fixed;
+      bottom: 85px;
+      right: 24px;
+      height: 50px;
+      width: 50px;
+      background: #00B2EE;
+      border-radius: 50%;
+      text-align: center;
+
+   }
+   .write-content image{
+     height: 30px;
+     width: 30px;
+     margin-top: 10px;
+   }
+   .page{
+     padding-bottom: 50px;
+   }
+   .my-page-avatar-content{
+      height: 120px;
+      background: #00B2EE;
+   }
+   .avatar-content{
+      text-align: center;
+      height: 80px;
+   }
+   .my-avatar{
+      height: 60px;
+      width: 60px;
+      margin-top: 20px;
+   }
+   .username{
+     text-align: center;
+   }
+   .tab{
+      position: fixed;
+      bottom: 0;
+      height: 50px;
+      width: 100%;
+      border-top: 1px solid rgba(27, 27, 27, 0.2);
+    }
+    .tab > view {
+      display: inline-block;
+      width: 33%;
+      height: 100%;
+      text-align: center;
+      position: relative;
+      line-height: 50px;
+      background: #FDFDFD;
+    }
+    .tab view image{
+      height: 50px;
+      width: 32px;
+    }
+    .visible{
+      display: visible
+    }
+    .hidden{
+      display: none;
+    }   
+    .messgae{
+      font-size: 12px;
+      position: absolute;
+      width: 25px;
+      height: 18px;
+      color: #ffffff;
+      left: 50%;
+      margin-left: 5px;
+      top: 5px;
+      text-align: center;
+      line-height: 18px;
+      font-weight: 700;
+      
+      border-radius: 8px;
+      background: red
+      }
+
+</style>

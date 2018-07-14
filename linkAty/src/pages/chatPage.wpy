@@ -1,0 +1,127 @@
+<template>
+	<view>
+	   <view class="message-item-content">
+	     <repeat for="{{newItem.message}}" item="item">
+	   	    <message :messageItem.sync="item" :itemObj.sync="newItem"></message>
+	      </repeat>
+	   </view>
+	   <view class="send-message-content" wx:if="{{newItem.message[newItem.message.length - 1].type > 1 }}">
+	   	   <textarea class="message-input" auto-height="true" maxlength="-1" placeholder="回复:"  value="{{new_message}}" bindinput="messageChange"/></textarea>
+	   	   <button class="btn-send {{new_message === '' ? '' : 'notEmpty'}}" @tap="send" disabled="{{new_message === '' ? true : false}}">发送</button>
+	   </view>
+	</view>
+</template>
+<script>
+   import wepy from 'wepy'
+   import message from '.././components/message'
+   import {date2str} from '../utils/dateToStr'
+   import { api } from '../config'
+   export default class chatPage extends wepy.page {
+     config = {
+       navigationBarTitleText: '消息'
+     }
+     components = {
+       message: message
+     }
+     data = {
+       newItem: '',
+       new_message: '',
+       session: '',
+       userInfo: ''
+     }
+     onLoad(params, data) {
+       this.newItem = data.preload.item
+       this.session = this.$parent.globalData.openId
+       this.userInfo = this.$parent.globalData.userInfo
+     }
+     methods = {
+       async send() {
+         let date = new Date()
+         let omitContent = this.new_message.length > 15 ? (this.new_message.substr(0, 16) + '') : false
+         let dateStr = date2str(date, 'datestr')
+         let userData = {
+           userid: this.session,
+           name: this.userInfo.name,
+           avatar: this.userInfo.avatar
+         }
+         let myMessage = {
+           type: 4,
+           content: this.new_message,
+           omitContent: omitContent,
+           date: dateStr
+         }
+         let newMessage = this.newItem.message
+         newMessage.push(myMessage)
+         let header = {}
+         header['seesion'] = this.session
+         let data = {
+           myMessageId: this.newItem._id,
+           myMessage: newMessage,
+           toUserId: this.newItem.from.userid,
+           activity: this.newItem.activity,
+           userData
+         }
+         try {
+           const body = await wepy.request({
+             url: api.message.chatSend.url,
+             method: api.message.chatSend.method,
+             data: data,
+             header: header
+           })
+           if (body.data.code === -1) {
+             this.newItem.message.pop()
+             wepy.showModal({
+               title: '提示',
+               content: '图片上传出错'
+             })
+           }
+         } catch (e) {
+         }
+         this.new_message = ''
+         this.$apply()
+       },
+       messageChange(event) {
+         this.new_message = event.detail.value
+       }
+     }
+   }
+</script>
+<style lang="less">
+ .message-item-content{
+ 	padding-bottom: 110px;
+ }
+  .send-message-content{
+  	position: fixed;
+  	bottom: 5px;
+  	width: 100%;
+  	text-align: center;
+  	display: flex;
+  }
+  .message-input{
+  	border: 1px solid #D4D4D4;
+  	min-height: 23px;
+  	text-align: left;
+  	padding: 0 4px;
+  	height: auto;
+  	max-height: 100px;
+  	white-space: normal;
+  	border-radius: 4px;
+  }
+  .btn-send{
+    width: 50px;
+    height: 23px;
+    text-align: center;
+    line-height: 23px;
+    border: 1px solid #D4D4D4;
+    padding: 4px;
+    align-self:flex-end;
+    margin-bottom: 2px;
+    mrgin-left: 4px;
+    margin-right: 4px;
+    font-size: 14px;
+    box-sizing: content-box;
+  }
+  .notEmpty{
+  	background: #00B2EE;
+  }
+</style>

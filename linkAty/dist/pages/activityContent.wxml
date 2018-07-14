@@ -1,0 +1,21 @@
+
+   <view class="activity-content">
+   	    <view class="content">
+   	    	<textarea bindinput="bindinput" placeholder="详细的活动介绍更能吸引人哦" maxlength="-1" value="{{content.contentText}}"/>
+   	    	<view class="img-content">
+                <block wx:for="{{content.imagesPath}}" wx:for-index="index" wx:for-item="item" wx:key="key">
+                   <view class="img-item">
+	   	    		     <image src="{{item}}" class="img" bindtap="viewPhoto" data-wpyviewphoto-a="{{item}}"/>
+	   	    		     <image src="../assets/svgs/delete.svg" class="close-icon" bindtap="deleteImg" data-wpydeleteimg-a="{{index}}"/>
+   	    		   </view>
+                </block>
+   	    		<view>
+   	    		   <image class="add-img-icon" src="../assets/svgs/choose-img.svg" bindtap="chooseImg"/>
+   	    		</view> 
+   	    	</view>
+   	        
+   	    </view>
+   	    <view class="btn-content">
+   	    	 <button type="primary" bindtap="submitContent">确定</button>
+   	    </view>
+   </view>

@@ -1,0 +1,104 @@
+<template>
+	<view class="join-contain">
+	  <view>
+	    <textarea bindinput="bindinput" placeholder="简单介绍一下自己吧^_^" maxlength="-1"/>
+      </view>
+       <view class="submit-content">
+	 	 	<button type="primary"  bindtap="submit">提交</button>
+	  </view>
+	</view>
+</template>
+<script>
+    import wepy from 'wepy'
+    import { api } from '../config'
+    import {date2str} from '../utils/dateToStr'
+    export default class joinPage extends wepy.page {
+      config = {
+        navigationBarTitleText: '报名'
+      }
+      data = {
+        activityObj: '',
+        dataContent: '',
+        session: '',
+        userinfo: ''
+      }
+      async onLoad(params, data) {
+        this.activityObj = data.preload.activityObj
+        this.session = this.$parent.globalData.openId
+        try {
+          let _userinfo = wepy.getStorageSync('_userinfo')
+          this.userinfo = _userinfo
+        } catch (e) {
+        }
+      }
+      methods = {
+        async submit() {
+          let date = new Date()
+          let omitContent = this.dataContent.length > 15 ? (this.dataContent.substr(0, 16) + '') : false
+          let dateStr = date2str(date, 'datestr')
+          let header = {}
+          header['session'] = this.session
+          this.activityObj.requestJoinUser.push(this.session)
+          let messageData = {
+            from: {
+              name: this.userinfo.name,
+              avatar: this.userinfo.avatar,
+              userid: this.session
+            },
+            to: this.activityObj.author,
+            activity: {
+              id: this.activityObj._id,
+              name: this.activityObj.title
+            },
+            message: [{
+              type: 0,
+              date: dateStr,
+              content: this.dataContent,
+              omitContent: omitContent
+            }],
+            hadRead: false
+          }
+          const body = await wepy.request({
+            url: api.activity.joinRequest.url,
+            method: api.activity.joinRequest.method,
+            data: {
+              message: messageData,
+              requestUser: this.activityObj.requestJoinUser
+            },
+            header: header
+          })
+          if (body.data.code === 1) {
+            let page = this.getCurrentPages()
+            let key = 'requested'
+            page[1].setData({
+              [key]: true
+            })
+            this.$apply()
+            wepy.navigateBack()
+          }
+        },
+        bindinput(e) {
+          this.dataContent = e.detail.value
+          this.$apply()
+        }
+      }
+    }
+</script>
+<style lang="less">
+	.join-contain > view > textarea {
+	  width: 100%;
+	  padding: 15px;
+	  height: 100px;
+	  border: 1px solid #F2F2F2;
+	  background: #FFFFFF;
+	}
+	.submit-content{
+      margin-top: 20px;
+	}
+	.submit-content > button{
+    background-color: #7AC5CD;
+    }
+    .submit-content > .button-hover[type="primary"]{
+    background-color: #00B2EE;
+    }
+</style>

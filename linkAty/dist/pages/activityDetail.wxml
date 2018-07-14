@@ -1,0 +1,47 @@
+
+	 <view class="detail-content">
+	 	 <view class="poster-content">
+	 	 	 <image src="{{posterPath}}" class="poster"/>
+	 	 </view>
+	 	 <view class="des-content">
+            <view class="title-content">
+               <text>{{activityObj.title}}</text>
+            </view>
+            <view class="like-content">
+                 <view>
+                   <image  wx:if="{{you_liked}}" src="../assets/svgs/liked.svg" bindtap="liked" data-wpyliked-a="cancel"/>
+                 	 <image  wx:else src="../assets/svgs/like.svg" bindtap="liked" data-wpyliked-a="like"/>
+                 </view>
+            	 <view class="like-num">
+            	 	<text class="gray-text">{{activityObj.likedUser.length}}</text>
+            	 </view>
+            	 
+            </view>
+	 	 </view>
+	 	 <view class="activity-time-content ">
+	 	 	 <view class="activity-time-title">
+	 	 	 	 <image src="../assets/svgs/time.svg" class="icon"/>
+	 	 	 	 <text>活动时间</text>
+	 	 	 </view>
+	 	 	 <view class="activity-time">
+	 	 	 	 <text class="gray-text">{{dateTime}}</text>
+	 	 	 </view>
+	 	 </view>
+	 	 <view class="activity-location-content">
+	 	 	 <view class="location-title">
+	 	 	 	<image src="../assets/svgs/location.svg" class="icon"/>
+	 	 	 	<text>活动地点</text>
+	 	 	 </view>
+	 	 	 <view class="location-content" bindtap="openLocation">
+	 	 	 	 <text class="gray-text">{{activityObj.location.name}}</text>
+	 	 	 </view>
+	 	 </view>
+	 	 <view class="activity-des-content" bindtap="openContent">
+	 	 	  <view class="activity-des">活动介绍</view>
+	 	 	  <view class="part-content">{{partContent}}</view>
+	 	 	  <text class="read-more">查看详情></text>
+	 	 </view>
+	 	 <view class="join-content">
+	 	 	<button type="primary" bindtap="joinActivity" disabled="{{ joined || requested || isOwner}}">{{joined ? '报名成功' : (requested ? '已申请' : '报名参加')}}</button>
+	 	 </view>
+	 </view>

@@ -1,0 +1,212 @@
+<template>
+	<view class="message-content">
+		<view class="from-user-content" wx:if="{{messageItem.type !== 4}}">
+			<view class="avatar-content">
+				<image src="{{itemObj.from.avatar}}" class="avatar"></image>
+			</view>
+			 <view class="message-dec-content">
+			 	<view class="from-username">{{itemObj.from.name}}</view>
+			 	<view class="from-message-content">{{messageItem.content}}</view>
+			 </view>	 
+		</view>
+		<view class="process-request-content" wx:if="{{itemObj.message.length === 1 && messageItem.type === 0}}">
+		    <view class="request-tip-content">
+		      <text class="tip-from-name">{{itemObj.from.name}}</text>
+		      <text>请求加入你的活动</text>
+		      <text class="tip-activity-name">-{{itemObj.activity.name}}</text>
+		    </view>
+			<view class="process-btn-content">
+				<button class="process-btn" @tap="sendConfirm('allow')">同意</button>
+				<button class="process-btn" @tap="sendConfirm('reject')">拒绝</button>
+			</view>
+		</view>
+		<view class="my-content" wx:if="{{messageItem.type === 4}}">
+			<view class="message-dec-content">
+			 	<view class="my-message-content">{{messageItem.content}}</view>
+			 </view>
+			 <view class="avatar-content">
+				<image src="{{userInfo.avatar}}" class="avatar"></image>
+			</view>
+		</view>
+	</view>
+</template>
+<script>
+    import wepy from 'wepy'
+    import { api } from '../config'
+    import {date2str} from '../utils/dateToStr'
+    export default class message extends wepy.component {
+      props = {
+        itemObj: {
+          type: Object,
+          twoWay: true
+        },
+        messageItem: {
+          type: Object,
+          twoWay: true
+        }
+      }
+      data = {
+        session: '',
+        userInfo: ''
+      }
+      onLoad() {
+        try {
+          let userData = wepy.getStorageSync('_userinfo')
+          this.userInfo = userData
+          let _session = wepy.getStorageSync('_session')
+          this.session = _session.split('<<')[0]
+        } catch (e) {
+        }
+      }
+      methods = {
+        // 同意或拒绝活动申请处理函数
+        async sendConfirm(type) {
+          let date = new Date()
+          let dateStr = date2str(date, 'datestr')
+          let header = {}
+          header['session'] = this.session
+          let newMessage = {}
+          if (type === 'allow') {
+            newMessage['content'] = '我同意了你加入活动'
+          } else {
+            newMessage['content'] = '我拒绝了你加入活动'
+          }
+          newMessage.omitContent = false
+          newMessage.type = 4
+          newMessage.date = dateStr
+          this.itemObj.message.push(newMessage)
+          let toMessage = {
+            from: {
+              name: this.userInfo.name,
+              avatar: this.userInfo.avatar,
+              userid: this.session
+            },
+            to: this.itemObj.from.userid,
+            activity: {
+              name: this.itemObj.activity.name,
+              id: this.itemObj.activity.id
+            },
+            message: [{
+              date: dateStr,
+              content: newMessage.content,
+              type: type === 'allow' ? 2 : 1,
+              omitContent: false
+            }],
+            hadRead: false
+          }
+          let data = {
+            messageId: this.itemObj._id,
+            message: this.itemObj.message,
+            toMessage: toMessage,
+            type: type // 根据type修改相应Activity的users列表
+          }
+          const body = await wepy.request({
+            url: api.message.handRequestMsg.url,
+            method: api.message.handRequestMsg.method,
+            data: data,
+            header: header
+          })
+          if (body.data.code === -1) {
+            wepy.showModal({
+              title: '提示',
+              content: '网络错误'
+            })
+          }
+          this.$apply()
+        }
+      }
+    }
+</script>
+<style lang="less">
+  .my-content,
+  .from-user-content{
+  	display: flex;
+  	margin: 0 3px;
+  }
+  .from-message-content{
+    text-align: left;
+    padding-top: 5px;
+    background: #D1EEEE;
+    margin-top: 4px; 
+  }
+  .from-username{
+  	color: #00FF00;
+  }
+  .from-message-content,
+  .my-message-content{
+  	padding: 5px;
+  	border-radius: 4px;
+  	position: relative;
+  }
+  .from-message-content:after{
+  	content:'';
+  	display: block;
+  	width: 0;
+  	height: 0;
+  	position: absolute;
+  	top: 0px;;
+  	left: -6px;
+  	border-top: 4px solid transparent;
+  	border-bottom: 4px solid transparent;
+  	border-right: 8px solid  #D1EEEE;
+  	border-radius: 3px;
+  }
+  .my-content{
+  	justify-content: flex-end;
+  }
+  .my-message-content{
+  	text-align: right;
+  	margin-top:30px;
+    padding-right:10px;
+    background: #00B2EE;
+    color: #ffffff;
+
+  }
+  .my-message-content:after{
+    content:'';
+  	display: block;
+  	width: 0;
+  	height: 0;
+  	position: absolute;
+  	top: 0;
+  	right: -6px;
+  	border-top: 4px solid transparent;
+  	border-bottom: 4px solid transparent;
+  	border-left: 8px solid  #00B2EE;
+  	border-radius: 3px;
+  }
+  .process-request-content{
+  	background: #EBEBEB;
+  	width: auto;
+  	
+  }
+  .request-tip-content{
+  	padding: 10px;
+  }
+  .tip-activity-name{
+  	color: #00EEEE;
+  }
+  .tip-from-name{
+  	color: #00FF00;
+  }
+  .process-btn-content{
+  	display: flex;
+  }
+  .process-btn{
+  	height: 40px;
+  	line-height: 40px;
+  	display: inline-block;
+  	width: 50%;
+  	margin: 8px;
+  }
+  .avatar-content{
+    width: 80px;
+    justify-content: center;
+  }
+  .avatar{
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin: 5px;
+  }
+</style>

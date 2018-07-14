@@ -1,0 +1,137 @@
+<template>
+	<view class="my-activity-content">
+		<view class="activity-name-content">
+			<image src=".././assets/svgs/activity-icon.svg" class="my-activity-icon"></image>
+			<text>{{item.value.title}}</text>
+		</view>
+		<view class="my-num-content">
+			 <image src=".././assets/svgs/human.svg" class="my-activity-icon"></image>
+			 <text>{{item.value.joinedUser.length > 99 ? '99+' : item.value.joinedUser.length}}</text>
+		</view>
+		<view class="date-select-content">
+			<view class="date-content">
+				<image src=".././assets/svgs/time.svg" class="my-activity-icon"></image>
+				<text class="date" wx:if="{{item.value.date.endTime - dateNow > 0}}">{{item.value.date.end}}</text>
+				<text class="tip-date date" wx:else>活动已过期</text>
+			</view>
+			<view class="select-content" catchtap="showMore('{{index}}')">
+				<image src=".././assets/svgs/more.svg" class="my-activity-icon more-icon" ></image>
+			</view>
+		</view>
+	</view>
+</template>
+<script>
+   import wepy from 'wepy'
+   import 'wepy-async-function'
+   import { api } from '../config'
+   export default class myactivity extends wepy.component {
+     props = {
+       item: {
+         type: Object,
+         twoWay: true
+       },
+       index: {
+         type: Number
+       },
+       activitys: {
+         type: Object,
+         twoWay: true
+       }
+     }
+     data = {
+       timeNow: '',
+       session: ''
+     }
+     onLoad() {
+     }
+     methods = {
+       async showMore(index) {
+         try {
+           let _session = wepy.getStorageSync('_session')
+           this.session = _session.split('<<')[0]
+           const {tapIndex} = await wepy.showActionSheet({
+             itemList: ['删除']
+           })
+           let imgPaths = []
+           if (this.activitys[index].value.posterPath !== '') {
+             imgPaths.push(this.activitys[index].value.posterPath)
+           }
+           let data = {
+             imgPaths: imgPaths.concat(this.activitys[index].value.content.imagesPath),
+             activityId: this.activitys[index].value._id
+           }
+           // 删除对应的条目
+           if (tapIndex === 0) {
+             let header = {}
+             header['session'] = this.session
+             const body = await wepy.request({
+               url: api.activity.activityDel.url,
+               method: api.activity.activityDel.method,
+               data: data,
+               header: header
+             })
+             if (body.data.code === 1) {
+               this.$emit('deleteMyActivity', this.activitys[index].oldIndex)
+             }
+           }
+         } catch (e) {}
+       }
+     }
+     computed = {
+       dateNow() {
+         return (new Date()).getTime()
+       }
+     }
+   }
+</script>
+<style lang="less">
+  .my-activity-content{
+  	height: 90px;
+  	padding: 8px;
+  	margin-bottom: 12px;
+  	background: #FFFFFF;
+  }
+  .activity-name-content,
+  .my-num-content,
+  .date-select-content
+  { 
+  	display: flex;
+  	height: 30px;
+  	line-height: 30px;
+  }
+  .my-activity-icon{
+  	height: 20px;
+  	width: 20px;
+  	margin: 5px 20px;
+  }
+  .more-icon{
+  	margin: 5px 0;
+  }
+  .date-content,
+  .select-content 
+  {
+    display: flex;
+  }
+  .select-content{
+  	width: 40px;
+  }
+  .date-content,
+  {
+  	height: 100%;
+  	line-height: 30px;
+  	padding: 0;
+  	flex-grow: 1;
+  }
+  .date{
+  	display: inline-block;
+  	height: 30px;
+  	line-height: 30px;
+  	vertical-align: top;
+  }
+  .select-content{
+  	text-align: right;
+  }
+  .tip-date{
+  	color: #FF0000;
+  }
+</style>

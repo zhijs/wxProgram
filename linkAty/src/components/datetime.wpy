@@ -1,0 +1,132 @@
+<template>
+   <view class="datetime-contain" wx:if="{{dateObj.flag}}" animation="{animationData}">
+     <view class="btn-contain">
+        <text bindtap="selectPicker('cancel')">取消</text>
+        <text  bindtap="selectPicker('selected',{{dateObj.type}})">确定</text>
+     </view>
+     <picker-view  indicator-style="height: 50px;" value="{{value}}" bindchange="bindChange" class="mypicker">
+         <picker-view-column>
+            <repeat for="{{years}}" key="index" index="index" item="item">
+              <view class="item">{{item}}年</view>
+            </repeat>
+         </picker-view-column>
+          <picker-view-column>
+            <repeat for="{{month}}" key="index" index="index" item="item">
+              <view class="item">{{item}}月</view>
+            </repeat>
+        </picker-view-column>
+        <picker-view-column>
+          <repeat for="{{day}}" key="index" index="index" item="item">
+            <view class="item">{{item}}日</view>
+          </repeat>
+        </picker-view-column>
+        <picker-view-column>
+          <repeat for="{{hour}}" key="index" index="index" item="item">
+            <view class="item">{{item}}时</view>
+          </repeat>
+        </picker-view-column>
+         <picker-view-column>
+          <repeat for="{{minute}}" key="index" index="index" item="item">
+            <view class="item">{{item}}分</view>
+          </repeat>
+        </picker-view-column>
+  </picker-view>
+   </view>
+</template>
+<script>
+   import wepy from 'wepy'
+   import {date2str} from '../utils/dateToStr'
+   export default class datetime extends wepy.component {
+     data = {
+       month: [],
+       day: [],
+       hour: [],
+       minute: [],
+       years: [],
+       flag: true,
+       date: null,
+       value: [0, 1, 1, '00', '00'],
+       datetime: null,
+       animationData: {}
+     }
+     props = {
+       dateObj: Object,
+       twoWay: true
+     }
+     onLoad() {
+       this.date = new Date()
+       let year = this.date.getFullYear()
+       this.years = [year, year + 1]
+       let mouth = 
+       for (let m = 1; m <= 12; m++) {
+         var M = m < 10 ? (0 + '' + m) : m
+         this.month.push(M)
+       }
+       for (let d = 1; d <= 31; d++) {
+         var D = d < 10 ? (0 + '' + d) : d
+         this.day.push(D)
+       }
+       for (let h = 0; h < 24; h++) {
+         var H = h < 10 ? (0 + '' + h) : h
+         this.hour.push(H)
+       }
+       for (let minute = 0; minute < 60; minute++) {
+         var Minute = minute < 10 ? (0 + '' + minute) : minute
+         this.minute.push(Minute)
+       }
+       this.datetime = date2str(this.date, 'datetime')
+     }
+     onShow () {
+     }
+     methods = {
+       selectPicker(type, dateType) {
+         this.dateObj.flag = false
+         this.$apply()
+         this.$emit('selectedDate', type, this.dateObj.type, this.datetime)
+       },
+       bindChange(e) {
+         const val = e.detail.value
+         this.datetime = this.years[val[0]] + '/' + this.month[val[1]] + '/' + this.day[val[2]] + ' ' + this.hour[val[3]] + ':' + this.minute[val[4]]
+       }
+     }
+   }
+</script>
+<style lang="less">
+   .datetime-contain{
+      width: 100%;
+      height: 320px;
+      border-top: 1px solid #8A8A8A;
+      background:#F2F2F2;
+   }
+   .btn-contain{
+     height: 40px;
+   }
+   .btn-contain > text{
+     display: inline-block;
+     width: 50%;
+     line-height: 40px;
+     box-sizing: border-box;
+   }
+   .btn-contain > text:nth-child(1){
+     color: #C9C9C9;
+     padding-left: 10px;
+     text-align: left;
+   }
+   .btn-contain > text:nth-child(2){
+     text-align: right;
+     padding-right: 10px;
+     color: #7CCD7C;
+   }
+   .mypicker{
+     width: 100%; 
+     height: 250px;
+     border-top: 1px solid #EDEDED;
+   }
+   .item{
+     line-height: 50px;
+     text-align: center;
+   }
+   .hidden{
+     display: none;
+   }
+</style>

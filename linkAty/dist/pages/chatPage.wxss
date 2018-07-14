@@ -1,0 +1,2 @@
+@import "./../components/message.wxss";
+.message-item-content{padding-bottom:110px}.send-message-content{position:fixed;bottom:5px;width:100%;text-align:center;display:flex}.message-input{border:1px solid #D4D4D4;min-height:23px;text-align:left;padding:0 4px;height:auto;max-height:100px;white-space:normal;border-radius:4px}.btn-send{width:50px;height:23px;text-align:center;line-height:23px;border:1px solid #D4D4D4;padding:4px;align-self:flex-end;margin-bottom:2px;mrgin-left:4px;margin-right:4px;font-size:14px;box-sizing:content-box}.notEmpty{background:#00B2EE}

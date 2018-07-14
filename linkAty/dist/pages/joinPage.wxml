@@ -1,0 +1,9 @@
+
+	<view class="join-contain">
+	  <view>
+	    <textarea bindinput="bindinput" placeholder="简单介绍一下自己吧^_^" maxlength="-1"/>
+      </view>
+       <view class="submit-content">
+	 	 	<button type="primary" bindtap="submit">提交</button>
+	  </view>
+	</view>

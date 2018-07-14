@@ -1,0 +1,323 @@
+<template>
+	 <view class="detail-content">
+	 	 <view class="poster-content">
+	 	 	 <image src="{{posterPath}}" class="poster"></image>
+	 	 </view>
+	 	 <view class="des-content">
+            <view class="title-content">
+               <text >{{activityObj.title}}</text>
+            </view>
+            <view class="like-content">
+                 <view>
+                   <image wx:if="{{you_liked}}" src="../assets/svgs/liked.svg" @tap="liked('cancel')"></image>
+                 	 <image  wx:else src="../assets/svgs/like.svg" @tap="liked('like')"></image>
+                 </view>
+            	 <view class="like-num">
+            	 	<text class="gray-text">{{activityObj.likedUser.length}}</text>
+            	 </view>
+            	 
+            </view>
+	 	 </view>
+	 	 <view class="activity-time-content ">
+	 	 	 <view class="activity-time-title">
+	 	 	 	 <image src="../assets/svgs/time.svg" class="icon"></image>
+	 	 	 	 <text>活动时间</text>
+	 	 	 </view>
+	 	 	 <view class="activity-time">
+	 	 	 	 <text class="gray-text">{{dateTime}}</text>
+	 	 	 </view>
+	 	 </view>
+	 	 <view class="activity-location-content">
+	 	 	 <view class="location-title">
+	 	 	 	<image src="../assets/svgs/location.svg" class="icon"></image>
+	 	 	 	<text >活动地点</text>
+	 	 	 </view>
+	 	 	 <view class="location-content" @tap="openLocation">
+	 	 	 	 <text class="gray-text">{{activityObj.location.name}}</text>
+	 	 	 </view>
+	 	 </view>
+	 	 <view class="activity-des-content" @tap="openContent">
+	 	 	  <view class="activity-des">活动介绍</view>
+	 	 	  <view class="part-content">{{partContent}}</view>
+	 	 	  <text class="read-more">查看详情&gt;</text>
+	 	 </view>
+	 	 <view class="join-content">
+	 	 	<button type="primary"  bindtap="joinActivity" disabled="{{ joined || requested || isOwner}}">{{joined ? '报名成功' : (requested ? '已申请' : '报名参加')}}</button>
+	 	 </view>
+	 </view>
+</template>
+<script>
+    import wepy from 'wepy'
+    import { api } from '../config'
+    export default class detail extends wepy.page {
+      config = {
+        navigationBarTitleText: '活动详情'
+      }
+      data = {
+        activityObj: '',
+        you_liked: false,
+        dateTime: '',
+        partContent: '',
+        sessionIndex: '',
+        objIndex: '',
+        session: '', // 用户标识符
+        joined: false, // 是否参加
+        requested: false // 是否报名
+      }
+      onLoad(param, data) {
+        this.session = this.$parent.globalData.openId
+        let dataObj = data.preload.data.item
+        this.activityObj = dataObj
+        let maxLen = Math.max(this.activityObj.likedUser.length, this.activityObj.joinedUser.length, this.activityObj.requestJoinUser.length)
+
+        // 保存各个数组原先的长度
+        let likeLen = this.activityObj.likedUser.length
+        let joinedLen = this.activityObj.joinedUser.length
+        let requestedLen = this.activityObj.requestJoinUser.length
+
+        // 统一各个数组的长度
+        this.activityObj.likedUser.length = maxLen
+        this.activityObj.joinedUser.length = maxLen
+        this.activityObj.requestJoinUser.length = maxLen
+        this.objIndex = data.preload.data.itemIndex
+        let startStr = dataObj.date.start
+        let endStr = dataObj.date.end
+        this.partContent = dataObj.content.contentText.substring(0, 20)
+        if (startStr.substring(0, 10) === endStr.substring(0, 10)) {
+          this.dateTime = startStr.substring(5, 7) + '月' + startStr.substring(8, 10) + '日 ' + startStr.substring(11) + '-' + endStr.substring(11)
+        } else {
+          this.dateTime = startStr.substring(5, 7) + '月' + startStr.substring(8, 10) + '日 ' + startStr.substring(11) + '-' + endStr.substring(5, 7) + '月' + endStr.substring(8, 10) + '日 ' + endStr.substring(11)
+        }
+        for (let i = 0; i < maxLen; i++) {
+          if (this.activityObj.likedUser[i] === this.session) {
+            this.you_liked = true
+            this.sessionIndex = i
+          }
+          if (this.activityObj.joinedUser[i] === this.session) {
+            this.joined = true
+          }
+          if (this.activityObj.requestJoinUser[i] === this.session) {
+            this.requested = true
+          }
+        }
+
+        // 回置各个数组的长度
+        this.activityObj.likedUser.length = likeLen
+        this.activityObj.joinedUser.length = joinedLen
+        this.activityObj.requestJoinUser.length = requestedLen
+        this.$apply()
+      }
+      methods = {
+        async liked(type) {
+          if (type === 'cancel') {
+            this.activityObj.likedUser.splice(this.sessionIndex, 1)
+          } else {
+            this.activityObj.likedUser.push(this.session)
+          }
+          this.you_liked = !this.you_liked
+          try {
+            let header = {}
+            header['content-type'] = 'application/json'
+            header['session'] = this.session
+            const data = await wepy.request({
+              url: api.activity.likedUserUpdate.url,
+              method: api.activity.likedUserUpdate.method,
+              data: {
+                id: this.activityObj._id,
+                userList: this.activityObj.likedUser
+              },
+              header: header
+            })
+            // 提交后修改页面数据
+            if (data.data.code === 1) {
+              let page = this.getCurrentPages()
+              let key = 'activityList[' + this.objIndex + '].likedUser'
+              page[0].setData({
+                [key]: this.activityObj.likedUser
+              })
+              this.$apply()
+            } else {
+              wepy.showModal({
+                title: '提示',
+                content: '网络错误'
+              })
+            }
+          } catch (e) {
+          }
+        },
+        openLocation() {
+          let that = this
+          wepy.openLocation({
+            latitude: that.activityObj.location.latitude,
+            longitude: that.activityObj.location.longitude,
+            name: that.activityObj.location.name,
+            address: that.activityObj.location.name,
+            success: () => {
+            },
+            fail: () => {
+              wepy.showModal({
+                title: '提示',
+                content: '位置获取出错'
+              })
+            },
+            complete: () => {
+            }
+          })
+        },
+        openContent() {
+          this.$preload('content', this.activityObj.content)
+          this.$navigate('activityIntroduce')
+        },
+        joinActivity() {
+          this.$preload('activityObj', this.activityObj)
+          this.$navigate('joinPage')
+        }
+      }
+      computed = {
+        isOwner() {
+          return this.session === this.activityObj.author
+        },
+        posterPath() {
+          return this.activityObj.posterPath !== '' ? this.activityObj.posterPath : '../assets/svgs/avatar/test.jpg'
+        }
+      }
+    }
+</script>
+<style lang="less">
+  page{
+    background: #F8F8FF;
+  }
+  .detail-content > view{
+    background: #FFFFFF;
+  } 
+  .poster-content{
+  	width: 100%;
+  	height: 150px;
+  }
+  .poster-content .poster {
+  	height: 100%;
+  	width: 100%;
+  }
+  .des-content{
+  	display: flex;
+  }
+  .des-content > view{
+  	display: flex;
+  }
+  .des-content .title-content {
+  	flex-grow: 1;
+  }
+  .title-content text {
+  	display: inline-block;
+  	height: 100%;
+  	color: #000000;
+  	font-size: 24px;
+  	font-weight: 500;
+  	padding-left: 10px;
+  }
+  .like-content{
+  	width: 80px;
+  	height: 100%;
+    flex-shrink: 0;
+  	border-left: 1px solid #E0EEEE;
+  }
+  .like-content > view{
+  	display: flex;
+  	flex-grow: 1;
+  	height: 100%;
+  	justify-content:center;
+    line-height: 54px;
+  }
+  .like-content .like-num{
+  	justify-content:right;
+  }
+  .like-content image, .like-content text {
+  }
+  .like-content image{
+  	height: 26px;
+  	width: 26px;
+  	margin: 14px 0;
+  }
+  .icon{
+  	display: inline-block;
+  	width: 18px;
+  	height: 18px;
+  	margin: 16px 0;
+  }
+  
+  .activity-time-content,
+  .activity-location-content
+  {
+  	display: flex;
+  	height: 46px;
+  	margin-top: 15px;
+  	border-top: 1px solid #E0EEEE;
+  }
+  .activity-location-content{
+    margin-top: 0;
+  }
+  .activity-time-content text,
+  .activity-location-content text
+  {
+  	display: inline-block;
+  	height: 50px;
+  	line-height: 50px;
+  	vertical-align:top;
+    padding-left: 8px;
+    font-size: 15px;
+  }
+  .activity-time-content .activity-time-title,
+  .activity-location-content .location-title
+  {
+    width: 100px;
+    padding-left: 10px;
+  }
+  .activity-time-content .activity-time,
+  .activity-location-content  .location-content
+  {
+  	flex-grow: 1;
+  	text-align:right;
+    padding-right: 10px;
+  }
+  .lccation-content{
+    display: flex;
+    align-content: flex-end;
+  }
+  .location-content > image{
+  	margin: 14px 5px;
+    display: flex;
+  }
+  view > .gray-text{
+  	color: #CCCCCC;
+  	font-size: 12px;
+    display: flex;
+    flex-shrink: 1;
+  }
+  .activity-des-content{
+  	margin-top: 15px;
+  }
+  .activity-des{
+  	height: 50px;
+  	padding: 10px 
+  }
+  .read-more{
+  	color: #00B2EE;
+  	margin: 10px;
+  	display: inline-block;
+  }
+  .join-content{
+  	padding-bottom: 20px;
+  }
+  .join-content > button{
+    background-color: #7AC5CD;
+  }
+  .join-content > .button-hover[type="primary"]{
+    background-color: #00B2EE;
+  }
+  .part-content{
+  	font-size: 13px;
+  	color: #CCCCCC;
+  	padding: 10px;
+  }
+
+</style>

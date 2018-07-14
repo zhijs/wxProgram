@@ -1,0 +1,132 @@
+<template>
+   <view class="activity-content">
+   	    <view class="content">
+   	    	<textarea bindinput="bindinput" placeholder="详细的活动介绍更能吸引人哦" maxlength="-1" value="{{content.contentText}}"/>
+   	    	<view class="img-content">
+                <repeat for="{{content.imagesPath}}" index="index" item="item">
+                   <view class="img-item">
+	   	    		     <image src="{{item}}" class="img" @tap="viewPhoto({{item}})"></image>
+	   	    		     <image src="../assets/svgs/delete.svg" class="close-icon" @tap="deleteImg('{{index}}')"></image>
+   	    		   </view>
+                </repeat>
+   	    		<view>
+   	    		   <image class="add-img-icon" src="../assets/svgs/choose-img.svg" @tap="chooseImg"></image>
+   	    		</view> 
+   	    	</view>
+   	        
+   	    </view>
+   	    <view class="btn-content">
+   	    	 <button type="primary"  bindtap="submitContent">确定</button>
+   	    </view>
+   </view>
+</template>
+<script>
+   import wepy from 'wepy'
+   export default class extends wepy.page {
+     config = {
+       navigationBarTitleText: '活动说明'
+     }
+     data = {
+       content: {
+         imagesPath: [],
+         contentText: ''
+       }
+     }
+     onLoad(params, data) {
+       let contentObj = data.preload.content
+       if (contentObj.contentText === '活动介绍') {
+         this.content.contentText = ''
+       } else {
+         this.content.contentText = contentObj.contentText
+       }
+       this.content.imagesPath = contentObj.imagesPath
+     }
+     setPreviouData() {
+       try {
+         wepy.setStorageSync('_content', this.content)
+       } catch (e) {
+       }
+     }
+     methods = {
+       async chooseImg() {
+         try {
+           let {tempFilePaths} = await wepy.chooseImage({count: 6})
+           this.content.imagesPath.push(...tempFilePaths)
+           this.$apply()
+           this.setPreviouData()
+         } catch (e) {
+           wepy.showModal({
+             title: '提示',
+             content: '图片选择失败'
+           })
+         }
+       },
+       deleteImg(index) {
+         this.content.imagesPath.splice(index, 1)
+         this.$apply()
+         this.setPreviouData()
+       },
+       async viewPhoto(item) {
+         try {
+           await wepy.previewImage({urls: [item]})
+         } catch (e) {
+         }
+       },
+       bindinput(e) {
+         this.content.contentText = e.detail.value
+         this.$apply()
+         this.setPreviouData()
+       },
+       submitContent() {
+         wepy.navigateBack()
+       }
+     }
+  }
+</script>
+<style lang="less">
+  page{
+    background: #F8F8FF;
+  }
+  .content{
+  	background: #FFFFFF;
+  }
+  .content textarea{
+  	height: 200px;
+  	padding: 5px;
+  	background: #FFFFFF;
+  }
+  .activity-content .add-img-icon{
+  	height: 70px;
+  	width: 70px;
+  }
+  .btn-content{
+    margin-top: 12px;
+  }
+   .btn-content > button{
+    background-color: #7AC5CD;
+  }
+  .btn-content > .button-hover[type="primary"]{
+    background-color: #00B2EE;
+  }
+  .img-content{
+  	display: flex;
+  	padding: 10px;
+  	flex-wrap: wrap;
+  }
+  .img-content .img-item{
+  	margin-left: 5px;
+  	flex-shrink: 0;
+  }
+  .img-content .img-item .img{
+  	width: 70px;
+  	height: 70px;
+  	border-radius: 5px;
+  }
+  .img-content .img-item .close-icon{
+    height: 20px;
+    width: 20px;
+    position: relative;
+    top: -60px;
+    left: -10px;
+  }
+</style>

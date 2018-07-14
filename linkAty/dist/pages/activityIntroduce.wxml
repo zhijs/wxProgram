@@ -1,0 +1,9 @@
+ 
+    <view>
+	    <view class="content">{{content.contentText}}</view>
+      <view class="photo-content">
+         <block wx:for="{{content.imagesPath}}" wx:for-index="index" wx:for-item="item" wx:key="index">
+            <image class="photo" src="{{item}}" bindtap="viewPhoto" data-wpyviewphoto-a="{{item}}"/>
+         </block>
+      </view>
+	</view>

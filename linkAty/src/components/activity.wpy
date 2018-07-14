@@ -1,0 +1,135 @@
+<template>
+  <view class="contain">
+     <view class="avatar">
+        <image src="{{dataItem.posterPath !== '' ? dataItem.posterPath : '../assets/svgs/avatar/test.jpg'}}"></image>
+     </view>
+     <view class="des">
+          <view class="des-title">{{dataItem.title}}</view>  
+          <view class="des-type">
+            <text>{{dataItem.type}}</text>
+          </view> 
+          <view class="time-content">
+              <image class= "icon" src=".././assets/svgs/time.svg"></image>
+              <text>{{dataItem.date.start}}</text>
+          </view>
+          <view class="local-num-content">
+              <view class="location-content">
+                <image class= "icon" src=".././assets/svgs/location.svg"></image>
+                <text>{{dataItem.location.name}}</text>
+              </view>
+              <view class="num-content">
+                <image class= "icon" src=".././assets/svgs/human.svg"></image>
+                <text>{{dataItem.joinedUser.length > 99 ? '99+' : dataItem.joinedUser.length}}</text>
+              </view>
+          </view>
+     </view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+  export default class activity extends wepy.component {
+    props = {
+      dataItem: Object
+    }
+    /*
+    data = {
+      type: '社团活动',
+      title: '北门一日游',
+      date: '2017/12/30 10:00',
+      location: '深大北门',
+      humanNum: 10,
+      img: '../../assets/svgs/avatar/test.jpg'
+    }
+    */
+    onLoad () {
+    }
+  }
+</script>
+<style lang="less">
+  .contain{
+    display: flex;
+    background: #FFFFFF;
+    margin-bottom: 9px;
+  }
+  
+  .avatar{
+    width: 37%;
+    flex-shrink: 0;
+  }
+  .avatar image{
+    width: 100%;
+    height: 100%;
+  }
+  .des{
+    flex-grow: 1;
+    padding: 10px 2px 20px 2px;
+    margin-left: 4px;
+  }
+  .des > view{
+     margin-top: 5px;
+  }
+  .des .des-title{
+    color: black;
+    font-weight: 900;
+  }
+  .des .des-type,
+  .time-content,
+  .local-num-content
+  {
+    font-size: 14px;
+  }
+  .des-type > text{
+    background: #00B2EE;
+    padding: 2px;
+    color: #ffffff;
+  }
+  .icon{
+    width: 14px;
+    height: 14px;
+  }
+  .local-num-content{
+    display: flex;
+  }
+  .time-content, .location-content, .num-content {
+    height: 14px;
+    line-height: 14px;
+    flex-shrink: 0;
+  }
+  .time-content > text, 
+  .time-content > image, 
+  .location-content > text, 
+  .location-content > image, 
+  .num-content > image, 
+  .num-content > text{
+    vertical-align: top;
+  }
+  .num-content {
+    width: 50px;
+    flex-shrink: 0;
+  }
+  .time-content > text,
+  .location-content > text,
+  .num-content > text
+  {
+    line-height: 14px;
+    margin-left: 4px;
+    color: #8B8B83;
+    padding: 0 5px;
+  }
+   .location-content > text{
+    width: 70%;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space:nowrap;
+    vertical-align: top;
+    height: 14px;
+   }
+  .location-content{
+    width: 55%;
+    flex-shrink: 1;
+  }
+  .lcaction-content:after{
+    
+  }
+</style>

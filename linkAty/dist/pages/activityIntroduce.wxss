@@ -1,0 +1,1 @@
+.content{padding:10px;color:#000000}.photo-content{margin-top:20px;display:flex;padding:10px;flex-wrap:wrap}.photo-content .photo{width:100px;height:80px;margin:5px}

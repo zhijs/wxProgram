@@ -1,0 +1,164 @@
+<template>
+   <view class="new-item-content {{newItem.hadRead ? 'readed' : ''}}">
+   	  <view class="notice-icon-content">
+   	     <view class="img-content">
+   	  	    <image src=".././assets/svgs/notice.svg" class="notice-icon"></image>
+   	  	 </view>
+   	  </view>
+   	  <view class="main-content ">
+	   	  <view class="new-des-content">
+	   	  	  <view class="title-content">
+	   	  	      <view>
+		   	  	  	  <text class="wx-name">{{newItem.from.name}}</text>
+		   	  	  	  <text wx:if="{{newItem.message[newItem.message.length -1].type === 0}}">请求加入你的</text>
+		   	  	  	  <text wx:if="{{newItem.message[newItem.message.length -1].type === 2}}">同意了你加入</text>
+		   	  	  	  <text wx:if="{{newItem.message[newItem.message.length -1].type === 1}}">拒绝了你加入</text>
+		   	  	  	  <text wx:if="{{newItem.message[newItem.message.length -1].type !== 3}}" class="activity-name">-{{newItem.activity.name}}</text>
+		   	  	  	  <text wx:if="{{newItem.message[newItem.message.length -1].type === 3 }}">回复了你</text>
+		   	  	  </view>
+		   	  	  <view>
+		   	  	  	   <text class="new-content">{{ !newItem.message[newItem.message.length -1].omitContent ? newItem.message[newItem.message.length -1].content : newItem.message[newItem.message.length -1].omitContent}}</text>
+		   	  	  </view> 
+	   	  	  	  <view class="tip-content">
+	   	  	  	  	  <text class="new-date">{{newItem.message[newItem.message.length -1].date}}</text>
+	   	  	  	  </view>
+	 	  	  	  
+	   	  	  </view>
+	   	  </view>
+	   	  <view class="icon-content">
+	   	  	  	  <image src='.././assets/svgs/new_delete.svg' class="delete-icon" catchtap="deleteNew('{{index}}')"></image>
+	   	  </view>
+   	  </view>
+   </view>
+</template>
+<script>
+   import wepy from 'wepy'
+   import { api } from '../config'
+   export default class newitem extends wepy.component {
+     props = {
+       newItem: {
+         type: Object,
+         twoWay: true
+       },
+       items: {
+         type: Object,
+         twoWay: true
+       },
+       index: Number
+     }
+     data = {
+       session: ''
+     }
+     onLoad() {
+       try {
+         let _session = wepy.getStorageSync('_session')
+         this.session = _session.split('<<')[0]
+       } catch (e) {
+       }
+     }
+     methods = {
+       async deleteNew(index) {
+         let header = {}
+         header.session = this.session
+         let data = {
+           messgeId: this.items.data[index]._id
+         }
+         let msg = await wepy.showModal({
+           title: '提示',
+           content: '确定删除'
+         })
+         if (msg.confirm) {
+           const body = await wepy.request({
+             url: api.message.messageDel.url,
+             method: api.message.messageDel.method,
+             data: data,
+             header: header
+           })
+           if (body.data.code === 1) {
+             this.items.data[index].message = []
+             this.$apply()
+           }
+         }
+       }
+     }
+   }
+</script>
+<style lang="less">
+	.new-item-content{
+		display: flex;
+		height: 90px;
+		background: #FFFFFF;
+		border-bottom: 1px solid #EBEBEB;
+	}
+	.readed{
+		opacity: 0.4; 
+	}
+	.new-item-content > view{
+		display: flex;
+	}
+	.notice-icon-content{
+		width: 80px;
+		height: 100%;
+	}
+	.img-content{
+		width: 60px;
+		height: 60px;
+		margin: 15px 10px;
+		background: #1296db;
+		border-radius: 50%;
+	}
+	.notice-icon-content .notice-icon{
+		height: 40px;
+		width: 40px;
+		margin: 10px;
+	}
+	.main-content{
+		padding: 8px;
+		flex-grow: 1;
+	}
+	.new-des-content{
+		display: flex;
+	    flex-grow: 1;
+	}
+	.title-content{
+		flex-grow: 1;
+		position: relative;
+	}
+	.wx-name{
+	  color:#00FF00;
+	}
+	.activity-name{
+	  color: #00EEEE;
+	}
+	.tip-content{
+		display: flex;
+		margin-top: 3px;
+		font-size: 13px;
+		position: absolute;
+		bottom: 0;
+		width: 100%;
+	}
+	.new-date{
+		display: flex;
+		color: #DBDBDB;
+		width:100%;
+		flex-grow: 1;
+		justify-content:flex-end;
+	}
+	.icon-content{
+	   flex-shrink: 0;
+       width: 18px;
+       display: flex;
+	}
+	.icon-content .delete-icon{
+		width: 100%;
+		height: 30px;
+		margin-top:-5px;
+	}
+	.new-content{
+		font-size: 13px;
+		white-space: nowrap;
+		text-overflow:ellipsis;
+		color: #8B8B83;
+	}
+</style>

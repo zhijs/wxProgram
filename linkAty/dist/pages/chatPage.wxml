@@ -1,0 +1,43 @@
+
+	<view>
+	   <view class="message-item-content">
+	     <block wx:for="{{newItem.message}}" wx:for-index="index" wx:for-item="item" wx:key="key">
+	   	    
+	<view class="message-content">
+		<view class="from-user-content"  wx:if="{{item.type !== 4}}">
+			<view class="avatar-content">
+				<image src="{{newItem.from.avatar}}" class="avatar"/>
+			</view>
+			 <view class="message-dec-content">
+			 	<view class="from-username">{{newItem.from.name}}</view>
+			 	<view class="from-message-content">{{item.content}}</view>
+			 </view>	 
+		</view>
+		<view class="process-request-content"  wx:if="{{newItem.message.length === 1 && item.type === 0}}">
+		    <view class="request-tip-content">
+		      <text class="tip-from-name">{{newItem.from.name}}</text>
+		      <text>请求加入你的活动</text>
+		      <text class="tip-activity-name">-{{newItem.activity.name}}</text>
+		    </view>
+			<view class="process-btn-content">
+				<button class="process-btn" bindtap="$message$sendConfirm" data-com-index="{{index}}" data-wpysendconfirm-a="allow">同意</button>
+				<button class="process-btn" bindtap="$message$sendConfirm" data-com-index="{{index}}" data-wpysendconfirm-a="reject">拒绝</button>
+			</view>
+		</view>
+		<view class="my-content" wx:if="{{item.type === 4}}">
+			<view class="message-dec-content">
+			 	<view class="my-message-content">{{item.content}}</view>
+			 </view>
+			 <view class="avatar-content">
+				<image src="{{$message$userInfo.avatar}}" class="avatar"/>
+			</view>
+		</view>
+	</view>
+
+	      </block>
+	   </view>
+	   <view class="send-message-content"  wx:if="{{newItem.message[newItem.message.length - 1].type > 1 }}">
+	   	   <textarea class="message-input" auto-height="true" maxlength="-1" placeholder="回复:" value="{{new_message}}" bindinput="messageChange"/>
+	   	   <button class="btn-send {{new_message === '' ? '' : 'notEmpty'}}" bindtap="send" disabled="{{new_message === '' ? true : false}}">发送</button>
+	   </view>
+	</view>
