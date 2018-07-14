@@ -4,24 +4,12 @@
 wepy小程序 + express服务 + mongodb数据库
 
 ### 3.功能
-<div style="height:30px;">
-<input type="checkbox" disabled checked="checked" style="line-height:30px;"><span style="line-height:30px;vertical-aligin:top">活动发布</span>
-</div>
-<div style="height:30px;">
-<input type="checkbox" disabled checked="checked" style="line-height:30px;"><span style="line-height:30px;vertical-aligin:top">活动列表</span>
-</div>
-<div style="height:30px;">
-<input type="checkbox" disabled checked="checked" style="line-height:30px;"><span style="line-height:30px;vertical-aligin:top">活动详情</span>
-</div>
-<div style="height:30px;">
-<input type="checkbox" disabled checked="checked" style="line-height:30px;"><span style="line-height:30px;vertical-aligin:top">活动删除</span>
-</div>
-<div style="height:30px;">
-<input type="checkbox" disabled checked="checked" style="line-height:30px;"><span style="line-height:30px;vertical-aligin:top">消息列表</span>
-</div>
-<div style="height:30px;">
-<input type="checkbox" disabled checked="checked" style="line-height:30px;"><span style="line-height:30px;vertical-aligin:top">消息管理</span>
-</div>
+<input type="checkbox" disabled checked="checked" style="line-height:30px;"/><span style="line-height:30px;vertical-aligin:top">活动发布</span>  
+<input type="checkbox" disabled checked="checked" style="line-height:30px;"/><span style="line-height:30px;vertical-aligin:top">活动列表</span>  
+<input type="checkbox" disabled checked="checked" style="line-height:30px;"/><span style="line-height:30px;vertical-aligin:top">活动详情</span>  
+<input type="checkbox" disabled checked="checked" style="line-height:30px;"/><span style="line-height:30px;vertical-aligin:top">活动删除</span>  
+<input type="checkbox" disabled checked="checked" style="line-height:30px;"/><span style="line-height:30px;vertical-aligin:top">消息列表</span>  
+<input type="checkbox" disabled checked="checked" style="line-height:30px;"/><span style="line-height:30px;vertical-aligin:top">消息管理</span>
 
 ### 4.项目架构
 1.整体架构
